@@ -32,6 +32,8 @@ CHIBIOS_CONTRIB = $(TOP_DIR)/lib/chibios-contrib
 # Startup, Port and Platform support selection
 ##############################################################################
 
+USE_SMART_BUILD = yes
+
 ifeq ($(strip $(MCU)), risc-v)
     # RISC-V Support
     # As of 7.4.2021 there is only one supported RISC-V platform in Chibios-Contrib,
@@ -78,19 +80,35 @@ else
     endif
 endif
 
+# Startup files. Try a few different locations, for compability with old versions and
+# # for things hardware in the contrib repository
+# STARTUP_MK = $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/startup_$(MCU_STARTUP).mk
+# ifeq ("$(wildcard $(STARTUP_MK))","")
+# 	STARTUP_MK = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_$(MCU_STARTUP).mk
+# 	ifeq ("$(wildcard $(STARTUP_MK))","")
+# 		STARTUP_MK = $(CHIBIOS_CONTRIB)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_$(MCU_STARTUP).mk
+# 	endif
+# endif
+
 ifeq ("$(PLATFORM_NAME)","")
     PLATFORM_NAME = platform
 endif
 
+# ifeq ("$(wildcard $(PLATFORM_MK))","")
+#     PLATFORM_MK = $(CHIBIOS)/os/hal/ports/$(MCU_FAMILY)/$(MCU_SERIES)/$(PLATFORM_NAME).mk
+#     ifeq ("$(wildcard $(PLATFORM_MK))","")
+#         PLATFORM_MK = $(CHIBIOS_CONTRIB)/os/hal/ports/$(MCU_FAMILY)/$(MCU_SERIES)/$(PLATFORM_NAME).mk
+#     endif
+# endif
+
+
+PLATFORM_MK = $(CHIBIOS_CONTRIB)/os/hal/ports/$(MCU_FAMILY)/$(MCU_SERIES)/$(PLATFORM_NAME).mk
 ifeq ("$(wildcard $(PLATFORM_MK))","")
-    PLATFORM_MK = $(CHIBIOS)/os/hal/ports/$(MCU_FAMILY)/$(MCU_SERIES)/$(PLATFORM_NAME).mk
-    ifeq ("$(wildcard $(PLATFORM_MK))","")
-        PLATFORM_MK = $(CHIBIOS_CONTRIB)/os/hal/ports/$(MCU_FAMILY)/$(MCU_SERIES)/$(PLATFORM_NAME).mk
-    endif
+PLATFORM_MK = $(CHIBIOS)/os/hal/ports/$(MCU_FAMILY)/$(MCU_SERIES)/$(PLATFORM_NAME).mk
 endif
 
-include $(STARTUP_MK)
 include $(PORT_V)
+include $(STARTUP_MK)
 include $(PLATFORM_MK)
 
 #
@@ -215,6 +233,31 @@ endif
 # Linker script selection.
 ##############################################################################
 
+CONFDIR = $(HALCONFDIR)
+
+# HAL-OSAL files (optional).
+include $(CHIBIOS)/os/hal/hal.mk
+
+ifeq ("$(PLATFORM_NAME)","")
+	PLATFORM_NAME = platform
+endif
+
+include $(BOARD_MK)
+-include $(CHIBIOS)/os/hal/osal/rt/osal.mk         # ChibiOS <= 19.x
+-include $(CHIBIOS)/os/hal/osal/rt-nil/osal.mk     # ChibiOS >= 20.x
+# RTOS files (optional).
+include $(CHIBIOS)/os/rt/rt.mk
+# Compability with old version
+
+# Other files (optional).
+include $(CHIBIOS)/os/hal/lib/streams/streams.mk
+
+RULESPATH = $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC
+ifeq ("$(wildcard $(RULESPATH)/rules.mk)","")
+RULESPATH = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC
+endif
+
+# Define linker script file here
 ifneq ("$(wildcard $(KEYBOARD_PATH_5)/ld/$(MCU_LDSCRIPT).ld)","")
     LDSCRIPT = $(KEYBOARD_PATH_5)/ld/$(MCU_LDSCRIPT).ld
 else ifneq ("$(wildcard $(KEYBOARD_PATH_4)/ld/$(MCU_LDSCRIPT).ld)","")
