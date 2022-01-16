@@ -224,6 +224,24 @@
 #define STM32_SERIAL_UART5_PRIORITY         12
 
 /*
+ * SIO driver system settings.
+ */
+#define STM32_SIO_USE_USART1                FALSE
+#define STM32_SIO_USE_USART2                FALSE
+#define STM32_SIO_USE_USART3                FALSE
+#define STM32_SIO_USE_UART4                 FALSE
+#define STM32_SIO_USE_UART5                 FALSE
+
+/*
+ * IRQ system settings.
+ */
+#define STM32_IRQ_USART1_PRIORITY           12
+#define STM32_IRQ_USART2_PRIORITY           12
+#define STM32_IRQ_USART3_PRIORITY           12
+#define STM32_IRQ_UART4_PRIORITY            12
+#define STM32_IRQ_UART5_PRIORITY            12
+
+/*
  * SPI driver system settings.
  */
 #define STM32_SPI_USE_SPI1                  FALSE
