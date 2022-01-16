@@ -23,8 +23,24 @@
 #include <ch.h>
 #include <hal.h>
 
-#if !defined(SERIAL_USART_DRIVER)
-#    define SERIAL_USART_DRIVER SD1
+#if HAL_USE_SIO
+
+typedef SIODriver QMKSerialDriver;
+typedef SIOConfig QMKSerialConfig;
+
+#    if !defined(SERIAL_USART_DRIVER)
+#        define SERIAL_USART_DRIVER SIOD1
+#    endif
+
+#elif HAL_USE_SERIAL
+
+typedef SerialDriver QMKSerialDriver;
+typedef SerialConfig QMKSerialConfig;
+
+#    if !defined(SERIAL_USART_DRIVER)
+#        define SERIAL_USART_DRIVER SD1
+#    endif
+
 #endif
 
 #if !defined(USE_GPIOV1)
