@@ -1,4 +1,5 @@
 /* Copyright 2021 QMK
+ * Copyright 2022 Stefan Kerkmann
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,27 +18,74 @@
 #include "serial_usart.h"
 
 #if defined(SERIAL_USART_CONFIG)
-static SerialConfig serial_config = SERIAL_USART_CONFIG;
+static QMKSerialConfig serial_config = SERIAL_USART_CONFIG;
 #else
-static SerialConfig serial_config = {
-    .speed = (SERIAL_USART_SPEED), /* speed - mandatory */
+static QMKSerialConfig serial_config = {
+#    if HAL_USE_SERIAL
+    .speed = (SERIAL_USART_SPEED), /* baudrate - mandatory */
+#    else
+    .baud = (SERIAL_USART_SPEED), /* baudrate - mandatory */
+#    endif
     .cr1   = (SERIAL_USART_CR1),
     .cr2   = (SERIAL_USART_CR2),
 #    if !defined(SERIAL_USART_FULL_DUPLEX)
     .cr3   = ((SERIAL_USART_CR3) | USART_CR3_HDSEL) /* activate half-duplex mode */
 #    else
-    .cr3 = (SERIAL_USART_CR3)
+    .cr3  = (SERIAL_USART_CR3)
 #    endif
 };
 #endif
 
-static SerialDriver* serial_driver = &SERIAL_USART_DRIVER;
+static QMKSerialDriver* serial_driver = (QMKSerialDriver*)&SERIAL_USART_DRIVER;
 
 static inline bool react_to_transactions(void);
 static inline bool __attribute__((nonnull)) receive(uint8_t* destination, const size_t size);
+static inline bool __attribute__((nonnull)) receive_blocking(uint8_t* destination, const size_t size);
 static inline bool __attribute__((nonnull)) send(const uint8_t* source, const size_t size);
 static inline bool initiate_transaction(uint8_t sstd_index);
 static inline void usart_clear(void);
+static inline void usart_driver_start(void);
+
+#if HAL_USE_SIO
+
+void clear_rx_evt_cb(SIODriver* siop) {
+    osalSysLockFromISR();
+    /* If errors occured during transactions this callback is invoked. We just
+     * clear the error sources and move on. We rely on the fact that we check
+     * for the success of the transaction by comparing the received/send bytes
+     * with the actual received/send bytes in the send/receive functions. */
+    sioGetAndClearEventsI(serial_driver);
+    osalSysUnlockFromISR();
+}
+
+static const SIOOperation serial_usart_operation = {.rx_cb = NULL, .rx_idle_cb = NULL, .tx_cb = NULL, .tx_end_cb = NULL, .rx_evt_cb = &clear_rx_evt_cb};
+
+/**
+ * @brief SIO Driver startup routine.
+ */
+static inline void usart_driver_start(void) {
+    sioStart(serial_driver, &serial_config);
+    sioStartOperation(serial_driver, &serial_usart_operation);
+}
+
+/**
+ * @brief Clear the receive input queue, as some MCUs have built-in hardware FIFOs.
+ */
+static inline void usart_clear(void) {
+    osalSysLock();
+    while (!sioIsRXEmptyX(serial_driver)) {
+        msg_t dump = sioGetX(serial_driver);
+        (void)dump;
+    }
+    osalSysUnlock();
+}
+
+#elif HAL_USE_SERIAL
+
+/**
+ * @brief SERIAL Driver startup routine.
+ */
+static inline void usart_driver_start(void) { sdStart(serial_driver, &serial_config); }
 
 /**
  * @brief Clear the receive input queue.
@@ -63,6 +111,12 @@ static inline void usart_clear(void) {
     }
 }
 
+#else
+
+#    error Either SERIAL or SIO driver is needed for serial_usart driver (TODO)
+
+#endif
+
 /**
  * @brief Blocking send of buffer with timeout.
  *
@@ -70,7 +124,7 @@ static inline void usart_clear(void) {
  * @return false Send failed.
  */
 static inline bool send(const uint8_t* source, const size_t size) {
-    bool success = (size_t)sdWriteTimeout(serial_driver, source, size, TIME_MS2I(SERIAL_USART_TIMEOUT)) == size;
+    bool success = (size_t)chnWriteTimeout(serial_driver, source, size, TIME_MS2I(SERIAL_USART_TIMEOUT)) == size;
 
 #if !defined(SERIAL_USART_FULL_DUPLEX)
     if (success) {
@@ -89,12 +143,24 @@ static inline bool send(const uint8_t* source, const size_t size) {
  * @brief  Blocking receive of size * bytes with timeout.
  *
  * @return true Receive success.
- * @return false Receive failed.
+ * @return false Receive failed, e.g. by timeout.
  */
 static inline bool receive(uint8_t* destination, const size_t size) {
-    bool success = (size_t)sdReadTimeout(serial_driver, destination, size, TIME_MS2I(SERIAL_USART_TIMEOUT)) == size;
+    bool success = (size_t)chnReadTimeout(serial_driver, destination, size, TIME_MS2I(SERIAL_USART_TIMEOUT)) == size;
     return success;
 }
+
+/**
+ * @brief  Blocking receive of size * bytes.
+ *
+ * @return true Receive success.
+ * @return false Receive failed.
+ */
+static inline bool receive_blocking(uint8_t* destination, const size_t size) {
+    bool success = (size_t)chnRead(serial_driver, destination, size) == size;
+    return success;
+}
+
 
 #if !defined(SERIAL_USART_FULL_DUPLEX)
 
@@ -145,7 +211,7 @@ __attribute__((weak)) void usart_init(void) {
 /**
  * @brief Overridable master specific initializations.
  */
-__attribute__((weak, nonnull)) void usart_master_init(SerialDriver** driver) {
+__attribute__((weak, nonnull)) void usart_master_init(QMKSerialDriver** driver) {
     (void)driver;
     usart_init();
 }
@@ -153,7 +219,7 @@ __attribute__((weak, nonnull)) void usart_master_init(SerialDriver** driver) {
 /**
  * @brief Overridable slave specific initializations.
  */
-__attribute__((weak, nonnull)) void usart_slave_init(SerialDriver** driver) {
+__attribute__((weak, nonnull)) void usart_slave_init(QMKSerialDriver** driver) {
     (void)driver;
     usart_init();
 }
@@ -182,7 +248,7 @@ static THD_FUNCTION(SlaveThread, arg) {
 void soft_serial_target_init(void) {
     usart_slave_init(&serial_driver);
 
-    sdStart(serial_driver, &serial_config);
+    usart_driver_start();
 
     /* Start transport thread. */
     chThdCreateStatic(waSlaveThread, sizeof(waSlaveThread), HIGHPRIO, SlaveThread, NULL);
@@ -193,7 +259,8 @@ void soft_serial_target_init(void) {
  */
 static inline bool react_to_transactions(void) {
     /* Wait until there is a transaction for us. */
-    uint8_t sstd_index = (uint8_t)sdGet(serial_driver);
+    uint8_t sstd_index = 0;
+    receive_blocking(&sstd_index, sizeof(sstd_index));
 
     /* Sanity check that we are actually responding to a valid transaction. */
     if (sstd_index >= NUM_TOTAL_TRANSACTIONS) {
@@ -241,7 +308,7 @@ void soft_serial_initiator_init(void) {
     serial_config.cr2 |= USART_CR2_SWAP; // master has swapped TX/RX pins
 #endif
 
-    sdStart(serial_driver, &serial_config);
+    usart_driver_start();
 }
 
 /**
