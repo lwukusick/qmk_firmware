@@ -58,11 +58,19 @@ typedef SerialConfig QMKSerialConfig;
 #endif
 
 #if !defined(SERIAL_USART_TX_PIN)
-#    define SERIAL_USART_TX_PIN A9
+#    if defined(MCU_RP)
+#        define SERIAL_USART_TX_PIN GP0
+#    else
+#        define SERIAL_USART_TX_PIN A9
+#    endif
 #endif
 
 #if !defined(SERIAL_USART_RX_PIN)
-#    define SERIAL_USART_RX_PIN A10
+#    if defined(MCU_RP)
+#        define SERIAL_USART_RX_PIN GP1
+#    else
+#        define SERIAL_USART_RX_PIN A10
+#    endif
 #endif
 
 #if !defined(USART_CR1_M0)
@@ -129,4 +137,4 @@ typedef SerialConfig QMKSerialConfig;
 #    define SERIAL_USART_TIMEOUT 20
 #endif
 
-#define HANDSHAKE_MAGIC 7
+#define HANDSHAKE_MAGIC 7U
