@@ -99,10 +99,15 @@ static inline bool react_to_transactions(void) {
  * @return bool Indicates success of transaction.
  */
 bool soft_serial_transaction(int index) {
-    /* Clear the receive queue, to start with a clean slate.
-     * Parts of failed transactions or spurious bytes could still be in it. */
-    driver_clear();
-    return initiate_transaction((uint8_t)index);
+    bool result = initiate_transaction((uint8_t)index);
+
+    if (!result) {
+        /* Clear the receive queue, to start with a clean slate.
+         * Parts of failed transactions or spurious bytes could still be in it. */
+        driver_clear();
+    }
+
+    return result;
 }
 
 /**
