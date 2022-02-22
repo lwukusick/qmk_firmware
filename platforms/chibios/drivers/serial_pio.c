@@ -10,6 +10,9 @@
 #    error PIO Driver is only available for Raspberry Pi 2040 MCUs!
 #endif
 
+static inline bool receive_impl(uint8_t* destination, const size_t size, sysinterval_t timeout);
+static inline bool send_impl(const uint8_t* source, const size_t size);
+
 #define MSG_PIO_ERROR (msg_t) - 3
 
 #if defined(SERIAL_PIO_USE_PIO0)
@@ -24,27 +27,24 @@ static PIO pio = pio1;
 static void pio_serve_interrupt(void);
 
 #if defined(SERIAL_PIO_USE_PIO0)
-
 OSAL_IRQ_HANDLER(RP_PIO0_IRQ_0_HANDLER) {
     OSAL_IRQ_PROLOGUE();
     pio_serve_interrupt();
     OSAL_IRQ_EPILOGUE();
 }
-
 #else
-
 OSAL_IRQ_HANDLER(RP_PIO1_IRQ_0_HANDLER) {
     OSAL_IRQ_PROLOGUE();
     pio_serve_interrupt();
     OSAL_IRQ_EPILOGUE();
 }
-
 #endif
 
-#define uart_tx_wrap_target 0
-#define uart_tx_wrap 3
+#define UART_TX_WRAP_TARGET 0
+#define UART_TX_WRAP 3
 
 // clang-format off
+#if defined(SERIAL_USART_FULL_DUPLEX)
 static const uint16_t uart_tx_program_instructions[] = {
             //     .wrap_target
     0x9fa0, //  0: pull   block           side 1 [7]
@@ -53,6 +53,16 @@ static const uint16_t uart_tx_program_instructions[] = {
     0x0642, //  3: jmp    x--, 2                 [6]
             //     .wrap
 };
+#else
+static const uint16_t uart_tx_program_instructions[] = {
+            //     .wrap_target
+    0x9fa0, //  0: pull   block           side 1 [7]
+    0xf727, //  1: set    x, 7            side 0 [7]
+    0x6081, //  2: out    pindirs, 1
+    0x0642, //  3: jmp    x--, 2                 [6]
+            //     .wrap
+};
+#endif
 // clang-format on
 
 static const pio_program_t uart_tx_program = {
@@ -61,21 +71,21 @@ static const pio_program_t uart_tx_program = {
     .origin       = -1,
 };
 
-#define uart_rx_wrap_target 0
-#define uart_rx_wrap 8
+#define UART_RX_WRAP_TARGET 0
+#define UART_RX_WRAP 8
 
 // clang-format off
 static const uint16_t uart_rx_program_instructions[] = {
             //     .wrap_target
-    0x2020, //  0: wait   0 pin, 0                   
+    0x2020, //  0: wait   0 pin, 0
     0xea27, //  1: set    x, 7                   [10]
-    0x4001, //  2: in     pins, 1                    
-    0x0642, //  3: jmp    x--, 2                 [6] 
-    0x00c8, //  4: jmp    pin, 8                     
-    0xc020, //  5: irq    wait 0                     
-    0x20a0, //  6: wait   1 pin, 0                   
-    0x0000, //  7: jmp    0                          
-    0x8020, //  8: push   block                      
+    0x4001, //  2: in     pins, 1
+    0x0642, //  3: jmp    x--, 2                 [6]
+    0x00c8, //  4: jmp    pin, 8
+    0xc020, //  5: irq    wait 0
+    0x20a0, //  6: wait   1 pin, 0
+    0x0000, //  7: jmp    0
+    0x8020, //  8: push   block
             //     .wrap
 };
 // clang-format on
@@ -148,20 +158,31 @@ static inline msg_t sync_tx(sysinterval_t timeout) {
     return msg;
 }
 
-static inline size_t pio_send(const uint8_t* source, const size_t size) {
+static inline bool send_impl(const uint8_t* source, const size_t size) {
     size_t send = 0;
-    while (true) {
-        if (pio_sm_is_tx_fifo_full(pio, tx_state_machine)) {
-            break;
+    msg_t  msg;
+    while (send < size) {
+        msg = sync_tx(TIME_MS2I(SERIAL_USART_TIMEOUT));
+        if (msg < MSG_OK) {
+            return false;
         }
-        if (send >= size) {
-            break;
+
+        osalSysLock();
+        while (send < size) {
+            if (pio_sm_is_tx_fifo_full(pio, tx_state_machine)) {
+                break;
+            }
+            if (send >= size) {
+                break;
+            }
+            pio_sm_put(pio, tx_state_machine, (uint32_t)(*source));
+            source++;
+            send++;
         }
-        pio_sm_put(pio, tx_state_machine, (uint32_t)(*source));
-        source++;
-        send++;
+        osalSysUnlock();
     }
-    return send;
+
+    return send == size;
 }
 
 /**
@@ -171,24 +192,29 @@ static inline size_t pio_send(const uint8_t* source, const size_t size) {
  * @return false Send failed.
  */
 inline bool send(const uint8_t* source, const size_t size) {
-    size_t send_total = 0U;
-    msg_t  msg;
+#if !defined(SERIAL_USART_FULL_DUPLEX)
+    // In Half-duplex operation the tx pin dual-functions as sender and
+    // receiver. To not receive the bits we will send, we disable the rx state
+    // machine.
+    pio_sm_set_enabled(pio, rx_state_machine, false);
+#endif
 
-    while (send_total < size) {
-        size_t send;
-        msg = sync_tx(TIME_MS2I(SERIAL_USART_TIMEOUT));
-        if (msg < MSG_OK) {
-            return false;
-        }
+    bool result = send_impl(source, size);
 
-        osalSysLock();
-        send = pio_send(source, size - send_total);
-        osalSysUnlock();
-        source += send;
-        send_total += send;
+#if !defined(SERIAL_USART_FULL_DUPLEX)
+    // Wait for the tx state machines FIFO to run empty and the machine to
+    // stall. This should mean that every bit has been pushed out of the state machine.
+    // Unfortunately we still have to wait a little bit more then it would take
+    // to send one complete uart frame before the rx state machine can be
+    // enabled again
+    while (!pio_sm_is_tx_fifo_empty(pio, tx_state_machine) || ((pio->fdebug & (1U << 24U << tx_state_machine)) == 0U)) {
     }
-
-    return send_total == size;
+    // Clear tx stalled flag
+    pio->fdebug |= (1U << 24U << tx_state_machine);
+    chSysPolledDelayX(US2RTC(1 * MHZ, (1000000U * 12U / SERIAL_USART_SPEED)));
+    pio_sm_set_enabled(pio, rx_state_machine, true);
+#endif
+    return result;
 }
 
 static inline msg_t sync_rx(sysinterval_t timeout) {
@@ -205,39 +231,29 @@ static inline msg_t sync_rx(sysinterval_t timeout) {
     return msg;
 }
 
-static inline size_t pio_read(uint8_t* destination, const size_t size) {
-    size_t received = 0;
-    while (true) {
-        if (pio_sm_is_rx_fifo_empty(pio, rx_state_machine)) {
-            break;
-        }
-        if (received >= size) {
-            break;
-        }
-        *destination++ = pio_sm_get(pio, rx_state_machine) >> 24UL;
-        received++;
-    }
-    return received;
-}
-
 static inline bool receive_impl(uint8_t* destination, const size_t size, sysinterval_t timeout) {
-    size_t read_total = 0U;
+    size_t read = 0U;
 
-    while (read_total < size) {
-        size_t read;
-        msg_t  msg = sync_rx(timeout);
+    while (read < size) {
+        msg_t msg = sync_rx(timeout);
         if (msg < MSG_OK) {
-            //  dprintf("failed: %04x, inte: %04x\n", msg, pio->inte0);
             return false;
         }
         osalSysLock();
-        read = pio_read(destination, size - read_total);
+        while (true) {
+            if (pio_sm_is_rx_fifo_empty(pio, rx_state_machine)) {
+                break;
+            }
+            if (read >= size) {
+                break;
+            }
+            *destination++ = *((uint8_t*)&pio->rxf[rx_state_machine] + 3U);
+            read++;
+        }
         osalSysUnlock();
-        read_total += read;
-        destination += read;
     }
 
-    return read_total == size;
+    return read == size;
 }
 
 /**
@@ -260,19 +276,43 @@ inline bool receive_blocking(uint8_t* destination, const size_t size) {
     return receive_impl(destination, size, TIME_INFINITE);
 }
 
-static inline void uart_tx_init(pin_t tx_pin) {
+static inline void pio_tx_init(pin_t tx_pin) {
     uint pio_idx = pio_get_index(pio);
     uint offset  = pio_add_program(pio, &uart_tx_program);
-    // Tell PIO to initially drive output-high on the selected pin, then map PIO
-    // onto that pin with the IO muxes.
-    pio_sm_set_pins_with_mask(pio, tx_state_machine, 1u << tx_pin, 1u << tx_pin);
-    pio_sm_set_pindirs_with_mask(pio, tx_state_machine, 1u << tx_pin, 1u << tx_pin);
 
-    palSetLineMode(tx_pin, pio_idx == 0 ? PAL_MODE_ALTERNATE_PIO0 : PAL_MODE_ALTERNATE_PIO1);
+#if defined(SERIAL_USART_FULL_DUPLEX)
+    // clang-format off
+    iomode_t tx_pin_mode = PAL_RP_GPIO_OE |
+                           PAL_RP_PAD_SLEWFAST |
+                           PAL_RP_PAD_DRIVE4 |
+                           (pio_idx == 0 ? PAL_MODE_ALTERNATE_PIO0 : PAL_MODE_ALTERNATE_PIO1);
+    // clang-format on
+    pio_sm_set_pins_with_mask(pio, tx_state_machine, 1u << tx_pin, 1u << tx_pin);
+    pio_sm_set_consecutive_pindirs(pio, tx_state_machine, tx_pin, 1, true);
+#else
+    // clang-format off
+    iomode_t tx_pin_mode = PAL_RP_PAD_IE |
+                           PAL_RP_GPIO_OE |
+                           PAL_RP_PAD_SCHMITT |
+                           PAL_RP_PAD_PUE |
+                           PAL_RP_PAD_SLEWFAST |
+                           PAL_RP_PAD_DRIVE4 |
+                           PAL_RP_IOCTRL_OEOVER_DRVINVPERI |
+                           (pio_idx == 0 ? PAL_MODE_ALTERNATE_PIO0 : PAL_MODE_ALTERNATE_PIO1);
+    // clang-format on
+    pio_sm_set_pins_with_mask(pio, tx_state_machine, 0u << tx_pin, 1u << tx_pin);
+    pio_sm_set_consecutive_pindirs(pio, tx_state_machine, tx_pin, 1, true);
+#endif
+
+    palSetLineMode(tx_pin, tx_pin_mode);
 
     pio_sm_config config = pio_get_default_sm_config();
-    sm_config_set_wrap(&config, offset + uart_tx_wrap_target, offset + uart_tx_wrap);
+    sm_config_set_wrap(&config, offset + UART_TX_WRAP_TARGET, offset + UART_TX_WRAP);
+#if defined(SERIAL_USART_FULL_DUPLEX)
     sm_config_set_sideset(&config, 2, true, false);
+#else
+    sm_config_set_sideset(&config, 2, true, true);
+#endif
     // OUT shifts to right, no autopull
     sm_config_set_out_shift(&config, true, false, 32);
     // We are mapping both OUT and side-set to the same pin, because sometimes
@@ -286,20 +326,28 @@ static inline void uart_tx_init(pin_t tx_pin) {
     float div = (float)clock_get_hz(clk_sys) / (8 * SERIAL_USART_SPEED);
     sm_config_set_clkdiv(&config, div);
     pio_sm_init(pio, tx_state_machine, offset, &config);
+    pio_sm_set_enabled(pio, tx_state_machine, true);
 }
 
-static inline void uart_rx_init(pin_t rx_pin) {
-    uint pio_idx = pio_get_index(pio);
+static inline void pio_rx_init(pin_t rx_pin) {
     uint offset  = pio_add_program(pio, &uart_rx_program);
+    uint pio_idx = pio_get_index(pio);
 
+#if defined(SERIAL_USART_FULL_DUPLEX)
     pio_sm_set_consecutive_pindirs(pio, rx_state_machine, rx_pin, 1, false);
-    // pio_gpio_init(pio, rx_pin);
-    // gpio_pull_up(rx_pin);
-
-    palSetLineMode(rx_pin, (pio_idx == 0 ? PAL_MODE_ALTERNATE_PIO0 : PAL_MODE_ALTERNATE_PIO1) | PAL_RP_PAD_PUE);
+    // clang-format off
+    iomode_t rx_pin_mode = PAL_RP_PAD_IE |
+                           PAL_RP_PAD_SCHMITT |
+                           PAL_RP_PAD_PUE |
+                           PAL_RP_PAD_SLEWFAST |
+                           PAL_RP_PAD_DRIVE4 |
+                           (pio_idx == 0 ? PAL_MODE_ALTERNATE_PIO0 : PAL_MODE_ALTERNATE_PIO1);
+    // clang-format on
+    palSetLineMode(rx_pin, rx_pin_mode);
+#endif
 
     pio_sm_config config = pio_get_default_sm_config();
-    sm_config_set_wrap(&config, offset + uart_rx_wrap_target, offset + uart_rx_wrap);
+    sm_config_set_wrap(&config, offset + UART_RX_WRAP_TARGET, offset + UART_RX_WRAP);
     sm_config_set_in_pins(&config, rx_pin); // for WAIT, IN
     sm_config_set_jmp_pin(&config, rx_pin); // for JMP
     // Shift to right, autopush disabled
@@ -310,6 +358,7 @@ static inline void uart_rx_init(pin_t rx_pin) {
     float div = (float)clock_get_hz(clk_sys) / (8 * SERIAL_USART_SPEED);
     sm_config_set_clkdiv(&config, div);
     pio_sm_init(pio, rx_state_machine, offset, &config);
+    pio_sm_set_enabled(pio, rx_state_machine, true);
 }
 
 static inline void pio_init(pin_t tx_pin, pin_t rx_pin) {
@@ -320,10 +369,10 @@ static inline void pio_init(pin_t tx_pin, pin_t rx_pin) {
     hal_lld_peripheral_unreset(pio_idx == 0 ? RESETS_ALLREG_PIO0 : RESETS_ALLREG_PIO1);
 
     pio_sm_claim(pio, tx_state_machine);
-    uart_tx_init(tx_pin);
+    pio_tx_init(tx_pin);
 
     pio_sm_claim(pio, rx_state_machine);
-    uart_rx_init(rx_pin);
+    pio_rx_init(rx_pin);
 
     // Enable error flag IRQ source for rx state machine
     pio_set_irq0_source_enabled(pio, pis_sm1_rx_fifo_not_empty, true);
@@ -332,14 +381,10 @@ static inline void pio_init(pin_t tx_pin, pin_t rx_pin) {
 
     // Enable PIO specific interrupt vector
 #if defined(SERIAL_PIO_USE_PIO0)
-    // TODO add RP_PIO0_IRQ_0_PRIORITY
     nvicEnableVector(RP_PIO0_IRQ_0_NUMBER, RP_IRQ_UART0_PRIORITY);
 #else
     nvicEnableVector(RP_PIO1_IRQ_0_NUMBER, RP_IRQ_UART0_PRIORITY);
 #endif
-
-    pio_enable_sm_mask_in_sync(pio, (1 << tx_state_machine) | (1 << rx_state_machine));
-    return;
 }
 
 /**
