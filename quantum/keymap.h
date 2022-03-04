@@ -36,7 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // ChibiOS uses RESET in its FlagStatus enumeration
 // Therefore define it as QK_BOOTLOADER here, to avoid name collision
 #if defined(PROTOCOL_CHIBIOS)
-#    define RESET QK_BOOTLOADER
+// #    define RESET QK_BOOTLOADER
 #endif
 // Gross hack, remove me and change RESET keycode to QK_BOOT
 #if defined(__AVR_AT90USB647__) || defined(__AVR_AT90USB1287__)
