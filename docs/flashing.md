@@ -348,6 +348,15 @@ Flashing sequence:
 3. Copy the .uf2 file to the new USB disk
 4. Wait for the keyboard to become available
 
+CLI Flashing sequence:
+
+1. Enter the bootloader using any of the following methods:
+    * Tap the `RESET` keycode
+    * Double-tap the `nRST` button on the PCB.
+2. Wait for the OS to detect the device
+3. Flash via QMK CLI eg. `qmk flash --keyboard handwired/onekey/blackpill_f411_tinyuf2 --keymap default`
+4. Wait for the keyboard to become available
+
 ## Raspberry Pi RP2040 UF2
 
 The `rules.mk` setting for this bootloader is `rp2040`, and can be specified at the keymap or user level.
@@ -371,4 +380,13 @@ Flashing sequence:
     * (TODO) Double-tap the `nRST` button on the PCB.
 2. Wait for the OS to detect the device
 3. Copy the .uf2 file to the new USB disk
+or
+
+CLI Flashing sequence:
+
+1. Enter the bootloader using any of the following methods:
+    * Tap the `RESET` keycode
+    * Double-tap the `nRST` button on the PCB.
+2. Wait for the OS to detect the device
+3. Flash via QMK CLI eg. `qmk flash --keyboard handwired/onekey/rpi_pico --keymap default`
 4. Wait for the keyboard to become available
