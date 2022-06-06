@@ -27,6 +27,7 @@ ALLOW_WARNINGS =   yes
 
 # QMK features
 CONSOLE_ENABLE                     = no
+CAPS_WORD_ENABLE                   = yes
 DEBOUNCE_TYPE                      = asym_eager_defer_pk
 EEPROM_DRIVER                      = i2c
 ENCODER_ENABLE                     = yes
