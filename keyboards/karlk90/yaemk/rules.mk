@@ -6,7 +6,7 @@ ifeq ($(strip $(RISC-V)), yes)
     BOARD              =   SIPEED_LONGAN_NANO
     BOOTLOADER         =   gd32v-dfu
     LTO_ENABLE         =   yes
-    EXTRAFLAGS         += -Ofast
+    EXTRAFLAGS         += -O2
     USE_PROCESS_STACKSIZE = 2048
     # Default clock is 96MHz, 120MHz is out of spec but possible.
     OPT_DEFS           += -DOVERCLOCK_120MHZ
@@ -15,7 +15,7 @@ else
     BOARD      =   GENERIC_STM32_F303XC
     BOOTLOADER =   stm32-dfu
     LTO_ENABLE =   yes
-    EXTRAFLAGS += -Ofast
+    EXTRAFLAGS += -O2
 endif
 
 # YAEMK source files
