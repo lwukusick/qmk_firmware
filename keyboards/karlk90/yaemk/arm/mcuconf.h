@@ -17,7 +17,6 @@
 
 #pragma once
 
-#if defined(__arm__)
 
 /* STM32F303 */
 #include_next <mcuconf.h>
@@ -39,30 +38,3 @@
 
 #undef STM32_SERIAL_USART3_PRIORITY
 #define STM32_SERIAL_USART3_PRIORITY 10
-
-#elif defined(__riscv)
-
-/* GD32VF103 */
-#include_next <mcuconf.h>
-
-/*
- * I2C driver system settings.
- */
-#undef GD32_I2C_USE_I2C0
-#define GD32_I2C_USE_I2C0                  TRUE
-
-/*
- * PWM driver system settings.
- */
-#undef GD32_PWM_USE_ADVANCED              
-#define GD32_PWM_USE_ADVANCED              TRUE
-#undef GD32_PWM_USE_TIM0
-#define GD32_PWM_USE_TIM0                  TRUE
-
-/*
- * SERIAL driver system settings.
- */
-#undef GD32_SERIAL_USE_USART2
-#define GD32_SERIAL_USE_USART2             TRUE
-
-#endif

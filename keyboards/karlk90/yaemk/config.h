@@ -3,22 +3,12 @@
 #include "config_common.h"
 
 /* USB CONFIG */
-#define USB_POLLING_INTERVAL_MS 1
 #define FORCE_NKRO
-/* Device descriptor parameters */
 #define VENDOR_ID 0x4B4B   // KK
 #define PRODUCT_ID 0x5941  // YA
 #define DEVICE_VER 0x0003
 #define MANUFACTURER KARLK90
-
-// clang-format off
-#if defined(__riscv)
-#    define PRODUCT YAEMK 1.2 RISC-V
-#elif defined(__arm__)
-#    define PRODUCT YAEMK 1.2 ARM
-#endif
 #define DESCRIPTION Split Keyboard
-// clang-format on
 
 /* MATRIX CONFIG */
 #define MATRIX_ROWS 10
@@ -32,7 +22,6 @@
 #define DIODE_DIRECTION COL2ROW
 #define DEBUG_MATRIX_SCAN_RATE
 #define DEBOUNCE 5
-#define QMK_KEYS_PER_SCAN 8
 
 /* CAPS WORD CONFIG */
 #define BOTH_SHIFTS_TURNS_ON_CAPS_WORD
@@ -127,11 +116,6 @@
 #define WS2812_PWM_PAL_MODE 6
 #define WS2812_DMA_CHANNEL 5
 #define WS2812_EXTERNAL_PULLUP
-#if defined(__riscv)
-#    define WS2812_DMA_STREAM GD32_DMA0_STREAM4
-#elif defined(__arm__)
-#    define WS2812_DMA_STREAM STM32_DMA1_STREAM5
-#endif
 
 /* SERIAL SPLIT DRIVER */
 #define SERIAL_USART_TX_PIN B10
@@ -141,19 +125,8 @@
 #define SERIAL_USART_TIMEOUT 5
 #define SERIAL_USART_CR2 0x0  // 1 stop bit is enough
 
-#if defined(__riscv)
-#    define SERIAL_USART_SPEED (GD32_PCLK1 >> 4)  // Use highest possible baudrate.
-#elif defined(__arm__)
-#    define SERIAL_USART_SPEED (STM32_PCLK1 >> 4)  // Use highest possible baudrate.
-#endif
-
 /* I2C DRIVER */
 #define EEPROM_I2C_CAT24C512
-
-#if defined(__riscv)
-#    define I2C1_CLOCK_SPEED 1000000
-#    define I2C1_DUTY_CYCLE FAST_DUTY_CYCLE_2
-#endif
 
 /* OLED DRIVER CONFIG */
 #define OLED_DISPLAY_CUSTOM
