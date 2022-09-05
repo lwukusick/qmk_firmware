@@ -12,7 +12,6 @@ enum Layers {
     _NAV  = 2,
     _FN   = 3,
     _RGB  = 4,
-    _GAME = 5,
 };
 
 enum Encoder {
@@ -28,14 +27,7 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      KC_TAB         , DE_K          , DE_DOT        , DE_O          , DE_COMM       , DE_Y          , MO(_RGB)      ,                                 MO(_RGB)      , DE_V          , DE_G          , DE_C          , DE_L          , DE_SS         , DE_Z          ,\
      MO(_SYM)       , LGUI_T(DE_H)  , LALT_T(DE_A)  , LCTL_T(DE_E)  , LT(_SYM,DE_I) , DE_U          , MO(_FN)       ,                                 MO(_FN)       , DE_D          , LT(_SYM,DE_T) , RCTL_T(DE_R)  , RALT_T(DE_N)  , RGUI_T(DE_S)  , DE_F          ,\
      MO(_NAV)       , DE_X          , DE_Q          , DE_ADIA       , DE_UDIA       , DE_ODIA       , KC_BSPC       , MO(_NAV)      , MO(_NAV)      , KC_ENT        , DE_B          , DE_P          , DE_W          , DE_M          , DE_J          , MO(_NAV)      ,\
-                                                      TG(_GAME)     , KC_ESC        , LSFT_T(KC_SPC), KC_BSPC       , MO(_NAV)      , MO(_NAV)      , KC_ENT        , RSFT_T(KC_SPC), KC_RALT       , TG(_GAME)\
-  ),
-  [_GAME] = LAYOUT( \
-     KC_ESC         , KC_1          , KC_2          , KC_3          , KC_4          , KC_5          , LCTL(KC_GRV)  ,                                 KC_ESC        , KC_6          , KC_7          , KC_8          , KC_9          , KC_0          , KC_MINS       ,\
-     KC_TAB         , KC_LSFT       , KC_Q          , KC_X          , KC_E          , KC_R          , KC_T          ,                                 _______       , KC_Y          , KC_U          , KC_I          , KC_O          , KC_P          , KC_LBRC       ,\
-     KC_LSFT        , KC_LSFT       , KC_A          , KC_W          , KC_D          , KC_F          , KC_G          ,                                 _______       , KC_H          , KC_J          , KC_K          , KC_L          , KC_SCLN       , KC_QUOT       ,\
-     KC_LALT        , KC_LCTL       , KC_Z          , KC_S          , KC_C          , KC_V          , KC_SPC        , KC_BSPC       , KC_BSPC       , KC_ENT        , KC_ENT        , KC_N          , KC_M          , KC_COMM       , KC_DOT        , KC_SLSH       ,\
-                                                      _______       , KC_LCTL       , KC_SPC        , KC_SPC        , KC_LGUI       , KC_CAPS       , KC_ENT        , KC_SPC        , KC_LALT       , _______
+                                                      KC_NO,          KC_ESC        , LSFT_T(KC_SPC), KC_BSPC       , MO(_NAV)      , MO(_NAV)      , KC_ENT        , RSFT_T(KC_SPC), KC_RALT       , KC_NO \
   ),
    [_SYM] = LAYOUT( \
     _______         , _______       , _______       , _______       , _______       , _______       , _______       ,                                 _______       , _______       , _______       , _______       , _______       , _______       , _______       ,\
@@ -236,9 +228,6 @@ void render_display(void) {
             w_val("Spd:  %03d\n", rgb_matrix_config.speed);
             break;
 #    endif
-        case _GAME:
-            oled_write_ln("Game", false);
-            break;
         default:
             if (is_keyboard_master()) {
                 oled_write_ln("\x7K.O,Y\x7", false);

@@ -4,11 +4,6 @@
 
 /* USB CONFIG */
 #define FORCE_NKRO
-#define VENDOR_ID 0x4B4B   // KK
-#define PRODUCT_ID 0x5941  // YA
-#define DEVICE_VER 0x0003
-#define MANUFACTURER KARLK90
-#define DESCRIPTION Split Keyboard
 
 /* MATRIX CONFIG */
 #define MATRIX_ROWS 10
@@ -21,7 +16,7 @@
     { A2, A7, B0, B1, B2, B13, B14, B15 }
 #define DIODE_DIRECTION COL2ROW
 #define DEBUG_MATRIX_SCAN_RATE
-#define DEBOUNCE 5
+#define DEBOUNCE 10
 
 /* CAPS WORD CONFIG */
 #define BOTH_SHIFTS_TURNS_ON_CAPS_WORD
