@@ -25,7 +25,7 @@ for more options.
 #ifdef RGB_MATRIX_ENABLE
 
 #define RGBLED_NUM 72
-#define DRIVER_LED_TOTAL RGBLED_NUM
+#define RGB_MATRIX_LED_COUNT RGBLED_NUM
 #define RGB_MATRIX_MAXIMUM_BRIGHTNESS 120 // limits maximum brightness of LEDs to 150 out of 255. Higher may cause the controller to crash.
 #define RGB_MATRIX_HUE_STEP 8
 #define RGB_MATRIX_SAT_STEP 8
@@ -61,4 +61,3 @@ for more options.
 #define MEDIA_KEY_DELAY 2
 
 #define USB_POLLING_INTERVAL_MS 1
-#define QMK_KEYS_PER_SCAN 12

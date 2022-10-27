@@ -19,13 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "config_common.h"
 
-/* USB Device descriptor parameter */
-#define VENDOR_ID    0x5559
-#define PRODUCT_ID   0x0001
-#define DEVICE_VER   0x0001
-#define MANUFACTURER @wekey
-#define PRODUCT      We27
-
 /* key matrix size */
 #define MATRIX_ROWS 6
 #define MATRIX_COLS 5
@@ -42,7 +35,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #define MATRIX_ROW_PINS { F1, D7, B4, B5, B6, F6 }
 #define MATRIX_COL_PINS { F4, F5, C7, D6, D4 }
-#define UNUSED_PINS
 
 /* COL2ROW, ROW2COL */
 #define DIODE_DIRECTION COL2ROW
@@ -56,7 +48,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // The pin connected to the data pin of the LEDs
 #define RGB_DI_PIN C6
 // The number of LEDs connected
-#define DRIVER_LED_TOTAL 27
+#define RGB_MATRIX_LED_COUNT 27
 
 #define RGB_MATRIX_KEYPRESSES // reacts to keypresses
 #define RGB_MATRIX_KEYRELEASES // reacts to keyreleases (instead of keypresses)

@@ -207,6 +207,8 @@ See also: [Basic Keycodes](keycodes_basic.md)
 |`KC_MEDIA_REWIND`       |`KC_MRWD`                      |Previous Track                         |✔<sup>6</sup>|✔<sup>5</sup>|✔                |
 |`KC_BRIGHTNESS_UP`      |`KC_BRIU`                      |Brightness Up                          |✔            |✔            |✔                |
 |`KC_BRIGHTNESS_DOWN`    |`KC_BRID`                      |Brightness Down                        |✔            |✔            |✔                |
+|`KC_CONTROL_PANEL`      |`KC_CPNL`                      |Open Control Panel                     |✔            |             |                 |
+|`KC_ASSISTANT`          |`KC_ASST`                      |Launch Context-Aware Assistant         |✔            |             |                 |
 
 <sup>1. The Linux kernel HID driver recognizes [nearly all keycodes](https://github.com/torvalds/linux/blob/master/drivers/hid/hid-input.c), but the default bindings depend on the DE/WM.</sup><br/>
 <sup>2. Treated as F13-F15.</sup><br/>
@@ -219,13 +221,13 @@ See also: [Basic Keycodes](keycodes_basic.md)
 
 See also: [Quantum Keycodes](quantum_keycodes.md#qmk-keycodes)
 
-|Key              |Aliases  |Description                                                                      |
-|-----------------|---------|---------------------------------------------------------------------------------|
-|`QK_BOOTLOADER`  |`QK_BOOT`|Put the keyboard into bootloader mode for flashing                               |
-|`QK_DEBUG_TOGGLE`|`DB_TOGG`|Toggle debug mode                                                                |
-|`QK_CLEAR_EEPROM`|`EE_CLR` |Reinitializes the keyboard's EEPROM (persistent memory)                          |
-|`QK_MAKE`        |         |Sends `qmk compile -kb (keyboard) -km (keymap)`, or `qmk flash` if shift is held |
-|`QK_REBOOT`      |`QK_RBT` |Resets the keyboard. Does not load the bootloader                                |
+|Key              |Aliases  |Description                                                                                                                                      |
+|-----------------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+|`QK_BOOTLOADER`  |`QK_BOOT`|Put the keyboard into bootloader mode for flashing                                                                                               |
+|`QK_DEBUG_TOGGLE`|`DB_TOGG`|Toggle debug mode                                                                                                                                |
+|`QK_CLEAR_EEPROM`|`EE_CLR` |Reinitializes the keyboard's EEPROM (persistent memory)                                                                                          |
+|`QK_MAKE`        |         |Sends `qmk compile -kb (keyboard) -km (keymap)`, or `qmk flash` if shift is held. Puts keyboard into bootloader mode if shift & control are held |
+|`QK_REBOOT`      |`QK_RBT` |Resets the keyboard. Does not load the bootloader                                                                                                |
 
 ## Audio Keys :id=audio-keys
 
@@ -337,6 +339,9 @@ See also: [Magic Keycodes](keycodes_magic.md)
 |`MAGIC_SWAP_CONTROL_CAPSLOCK`     |`CL_SWAP`|Swap Caps Lock and Left Control                                           |
 |`MAGIC_UNSWAP_CONTROL_CAPSLOCK`   |`CL_NORM`|Unswap Caps Lock and Left Control                                         |
 |`MAGIC_TOGGLE_CONTROL_CAPSLOCK`   |`CL_TOGG`|Toggle Caps Lock and Left Control swap                                    |
+|`MAGIC_SWAP_ESCAPE_CAPSLOCK`      |`EC_SWAP`|Swap Caps Lock and Escape                                                 |
+|`MAGIC_UNSWAP_ESCAPE_CAPSLOCK`    |`EC_NORM`|Unswap Caps Lock and Escape                                               |
+|`MAGIC_TOGGLE_ESCAPE_CAPSLOCK`    |`EC_TOGG`|Toggle Caps Lock and Escape swap                                          |
 |`MAGIC_CAPSLOCK_TO_CONTROL`       |`CL_CTRL`|Treat Caps Lock as Control                                                |
 |`MAGIC_UNCAPSLOCK_TO_CONTROL`     |`CL_CAPS`|Stop treating Caps Lock as Control                                        |
 |`MAGIC_SWAP_LCTL_LGUI`            |`LCG_SWP`|Swap Left Control and GUI                                                 |

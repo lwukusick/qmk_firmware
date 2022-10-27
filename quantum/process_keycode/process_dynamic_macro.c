@@ -45,6 +45,10 @@ __attribute__((weak)) void dynamic_macro_record_end_user(int8_t direction) {
     dynamic_macro_led_blink();
 }
 
+__attribute__((weak)) bool dynamic_macro_valid_key_user(uint16_t keycode, keyrecord_t *record) {
+    return true;
+}
+
 /* Convenience macros used for retrieving the debug info. All of them
  * need a `direction` variable accessible at the call site.
  */
@@ -86,6 +90,9 @@ void dynamic_macro_play(keyrecord_t *macro_buffer, keyrecord_t *macro_end, int8_
     while (macro_buffer != macro_end) {
         process_record(macro_buffer);
         macro_buffer += direction;
+#ifdef DYNAMIC_MACRO_DELAY
+        wait_ms(DYNAMIC_MACRO_DELAY);
+#endif
     }
 
     clear_keyboard();
@@ -249,14 +256,16 @@ bool process_dynamic_macro(uint16_t keycode, keyrecord_t *record) {
                 return false;
 #endif
             default:
-                /* Store the key in the macro buffer and process it normally. */
-                switch (macro_id) {
-                    case 1:
-                        dynamic_macro_record_key(macro_buffer, &macro_pointer, r_macro_end, +1, record);
-                        break;
-                    case 2:
-                        dynamic_macro_record_key(r_macro_buffer, &macro_pointer, macro_end, -1, record);
-                        break;
+                if (dynamic_macro_valid_key_user(keycode, record)) {
+                    /* Store the key in the macro buffer and process it normally. */
+                    switch (macro_id) {
+                        case 1:
+                            dynamic_macro_record_key(macro_buffer, &macro_pointer, r_macro_end, +1, record);
+                            break;
+                        case 2:
+                            dynamic_macro_record_key(r_macro_buffer, &macro_pointer, macro_end, -1, record);
+                            break;
+                    }
                 }
                 return true;
                 break;

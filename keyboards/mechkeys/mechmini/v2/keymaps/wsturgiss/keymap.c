@@ -65,7 +65,7 @@ void matrix_scan_user(void) {
     }
     //tableflip (LEADER - TF)
     SEQ_TWO_KEYS(KC_T, KC_F) {
-        set_unicode_input_mode(UC_OSX);
+        set_unicode_input_mode(UC_MAC);
         send_unicode_string("(ノಠ痊ಠ)ノ彡┻━┻");
     }
     //screencap (LEADER - SC)
@@ -74,7 +74,7 @@ void matrix_scan_user(void) {
     }
     //screencap (LEADER - TM)
     SEQ_TWO_KEYS(KC_T, KC_M) {
-        set_unicode_input_mode(UC_OSX);
+        set_unicode_input_mode(UC_MAC);
         register_unicode(0x2122); // ™
     }
     /*
@@ -87,7 +87,7 @@ void matrix_scan_user(void) {
 
 //change colors and rgb modes on layer change
 layer_state_t layer_state_set_user(layer_state_t state) {
-    switch (biton32(state)) {
+    switch (get_highest_layer(state)) {
     case raise:
         rgblight_mode_noeeprom(1);
         rgblight_setrgb(0xc7, 0x00, 0xf4);
@@ -103,4 +103,3 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     }
   return state;
 };
-

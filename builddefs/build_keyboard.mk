@@ -13,6 +13,14 @@ endif
 include paths.mk
 include $(BUILDDEFS_PATH)/message.mk
 
+# Helper to add defines with a 'QMK_' prefix
+define add_qmk_prefix_defs
+    ifdef $1
+        # Need to cater for 'STM32L4xx+'
+        OPT_DEFS += -DQMK_$(2)="$($1)" -DQMK_$(2)_$(shell echo $($1) | sed -e 's@+@Plus@g' -e 's@[^a-zA-Z0-9]@_@g' | tr '[:lower:]' '[:upper:]')
+    endif
+endef
+
 # Set the qmk cli to use
 QMK_BIN ?= qmk
 
@@ -116,26 +124,26 @@ include $(BUILDDEFS_PATH)/build_json.mk
 # Pull in keymap level rules.mk
 ifeq ("$(wildcard $(KEYMAP_PATH))", "")
     # Look through the possible keymap folders until we find a matching keymap.c
-    ifneq ("$(wildcard $(MAIN_KEYMAP_PATH_5)/keymap.c)","")
-        -include $(MAIN_KEYMAP_PATH_5)/rules.mk
-        KEYMAP_C := $(MAIN_KEYMAP_PATH_5)/keymap.c
-        KEYMAP_PATH := $(MAIN_KEYMAP_PATH_5)
-    else ifneq ("$(wildcard $(MAIN_KEYMAP_PATH_4)/keymap.c)","")
-        -include $(MAIN_KEYMAP_PATH_4)/rules.mk
-        KEYMAP_C := $(MAIN_KEYMAP_PATH_4)/keymap.c
-        KEYMAP_PATH := $(MAIN_KEYMAP_PATH_4)
-    else ifneq ("$(wildcard $(MAIN_KEYMAP_PATH_3)/keymap.c)","")
-        -include $(MAIN_KEYMAP_PATH_3)/rules.mk
-        KEYMAP_C := $(MAIN_KEYMAP_PATH_3)/keymap.c
-        KEYMAP_PATH := $(MAIN_KEYMAP_PATH_3)
+    ifneq ("$(wildcard $(MAIN_KEYMAP_PATH_1)/keymap.c)","")
+        -include $(MAIN_KEYMAP_PATH_1)/rules.mk
+        KEYMAP_C := $(MAIN_KEYMAP_PATH_1)/keymap.c
+        KEYMAP_PATH := $(MAIN_KEYMAP_PATH_1)
     else ifneq ("$(wildcard $(MAIN_KEYMAP_PATH_2)/keymap.c)","")
         -include $(MAIN_KEYMAP_PATH_2)/rules.mk
         KEYMAP_C := $(MAIN_KEYMAP_PATH_2)/keymap.c
         KEYMAP_PATH := $(MAIN_KEYMAP_PATH_2)
-    else ifneq ("$(wildcard $(MAIN_KEYMAP_PATH_1)/keymap.c)","")
-        -include $(MAIN_KEYMAP_PATH_1)/rules.mk
-        KEYMAP_C := $(MAIN_KEYMAP_PATH_1)/keymap.c
-        KEYMAP_PATH := $(MAIN_KEYMAP_PATH_1)
+    else ifneq ("$(wildcard $(MAIN_KEYMAP_PATH_3)/keymap.c)","")
+        -include $(MAIN_KEYMAP_PATH_3)/rules.mk
+        KEYMAP_C := $(MAIN_KEYMAP_PATH_3)/keymap.c
+        KEYMAP_PATH := $(MAIN_KEYMAP_PATH_3)
+    else ifneq ("$(wildcard $(MAIN_KEYMAP_PATH_4)/keymap.c)","")
+        -include $(MAIN_KEYMAP_PATH_4)/rules.mk
+        KEYMAP_C := $(MAIN_KEYMAP_PATH_4)/keymap.c
+        KEYMAP_PATH := $(MAIN_KEYMAP_PATH_4)
+    else ifneq ("$(wildcard $(MAIN_KEYMAP_PATH_5)/keymap.c)","")
+        -include $(MAIN_KEYMAP_PATH_5)/rules.mk
+        KEYMAP_C := $(MAIN_KEYMAP_PATH_5)/keymap.c
+        KEYMAP_PATH := $(MAIN_KEYMAP_PATH_5)
     else ifneq ($(LAYOUTS),)
         # If we haven't found a keymap yet fall back to community layouts
         include $(BUILDDEFS_PATH)/build_layout.mk
@@ -233,21 +241,20 @@ endif
 #
 #    https://docs.qmk.fm/#/feature_layouts?id=tips-for-making-layouts-keyboard-agnostic
 #
-QMK_KEYBOARD_H = $(KEYBOARD_OUTPUT)/src/default_keyboard.h
 ifneq ("$(wildcard $(KEYBOARD_PATH_1)/$(KEYBOARD_FOLDER_1).h)","")
-    QMK_KEYBOARD_H = $(KEYBOARD_FOLDER_1).h
+    FOUND_KEYBOARD_H = $(KEYBOARD_FOLDER_1).h
 endif
 ifneq ("$(wildcard $(KEYBOARD_PATH_2)/$(KEYBOARD_FOLDER_2).h)","")
-    QMK_KEYBOARD_H = $(KEYBOARD_FOLDER_2).h
+    FOUND_KEYBOARD_H = $(KEYBOARD_FOLDER_2).h
 endif
 ifneq ("$(wildcard $(KEYBOARD_PATH_3)/$(KEYBOARD_FOLDER_3).h)","")
-    QMK_KEYBOARD_H = $(KEYBOARD_FOLDER_3).h
+    FOUND_KEYBOARD_H = $(KEYBOARD_FOLDER_3).h
 endif
 ifneq ("$(wildcard $(KEYBOARD_PATH_4)/$(KEYBOARD_FOLDER_4).h)","")
-    QMK_KEYBOARD_H = $(KEYBOARD_FOLDER_4).h
+    FOUND_KEYBOARD_H = $(KEYBOARD_FOLDER_4).h
 endif
 ifneq ("$(wildcard $(KEYBOARD_PATH_5)/$(KEYBOARD_FOLDER_5).h)","")
-    QMK_KEYBOARD_H = $(KEYBOARD_FOLDER_5).h
+    FOUND_KEYBOARD_H = $(KEYBOARD_FOLDER_5).h
 endif
 
 # Determine and set parameters based on the keyboard's processor family.
@@ -321,7 +328,7 @@ ifneq ("$(wildcard $(KEYBOARD_PATH_5)/info.json)","")
     INFO_JSON_FILES += $(KEYBOARD_PATH_5)/info.json
 endif
 
-CONFIG_H += $(KEYBOARD_OUTPUT)/src/info_config.h $(KEYBOARD_OUTPUT)/src/layouts.h
+CONFIG_H += $(KEYBOARD_OUTPUT)/src/info_config.h
 KEYBOARD_SRC += $(KEYBOARD_OUTPUT)/src/default_keyboard.c
 
 $(KEYBOARD_OUTPUT)/src/info_config.h: $(INFO_JSON_FILES)
@@ -336,15 +343,10 @@ $(KEYBOARD_OUTPUT)/src/default_keyboard.c: $(INFO_JSON_FILES)
 
 $(KEYBOARD_OUTPUT)/src/default_keyboard.h: $(INFO_JSON_FILES)
 	@$(SILENT) || printf "$(MSG_GENERATING) $@" | $(AWK_CMD)
-	$(eval CMD=$(QMK_BIN) generate-keyboard-h --quiet --keyboard $(KEYBOARD) --output $(KEYBOARD_OUTPUT)/src/default_keyboard.h)
+	$(eval CMD=$(QMK_BIN) generate-keyboard-h --quiet --keyboard $(KEYBOARD) --include $(FOUND_KEYBOARD_H) --output $(KEYBOARD_OUTPUT)/src/default_keyboard.h)
 	@$(BUILD_CMD)
 
-$(KEYBOARD_OUTPUT)/src/layouts.h: $(INFO_JSON_FILES)
-	@$(SILENT) || printf "$(MSG_GENERATING) $@" | $(AWK_CMD)
-	$(eval CMD=$(QMK_BIN) generate-layouts --quiet --keyboard $(KEYBOARD) --output $(KEYBOARD_OUTPUT)/src/layouts.h)
-	@$(BUILD_CMD)
-
-generated-files: $(KEYBOARD_OUTPUT)/src/info_config.h $(KEYBOARD_OUTPUT)/src/default_keyboard.c $(KEYBOARD_OUTPUT)/src/default_keyboard.h $(KEYBOARD_OUTPUT)/src/layouts.h
+generated-files: $(KEYBOARD_OUTPUT)/src/info_config.h $(KEYBOARD_OUTPUT)/src/default_keyboard.c $(KEYBOARD_OUTPUT)/src/default_keyboard.h
 
 .INTERMEDIATE : generated-files
 
@@ -390,10 +392,18 @@ ifneq ("$(KEYMAP_H)","")
     CONFIG_H += $(KEYMAP_H)
 endif
 
+OPT_DEFS += -DKEYMAP_C=\"$(KEYMAP_C)\"
+
+# If a keymap or userspace places their keymap array in another file instead, allow for it to be included
+# !!NOTE!! -- For this to work, the source file cannot be part of $(SRC), so users should not add it via `SRC += <file>`
+ifneq ($(strip $(INTROSPECTION_KEYMAP_C)),)
+OPT_DEFS += -DINTROSPECTION_KEYMAP_C=\"$(strip $(INTROSPECTION_KEYMAP_C))\"
+endif
+
 # project specific files
 SRC += \
     $(KEYBOARD_SRC) \
-    $(KEYMAP_C) \
+    $(QUANTUM_DIR)/keymap_introspection.c \
     $(QUANTUM_SRC) \
     $(QUANTUM_DIR)/main.c \
 
@@ -412,7 +422,6 @@ include $(BUILDDEFS_PATH)/common_features.mk
 include $(BUILDDEFS_PATH)/generic_features.mk
 include $(TMK_PATH)/protocol.mk
 include $(PLATFORM_PATH)/common.mk
-include $(BUILDDEFS_PATH)/bootloader.mk
 
 SRC += $(patsubst %.c,%.clib,$(LIB_SRC))
 SRC += $(patsubst %.c,%.clib,$(QUANTUM_LIB_SRC))
@@ -427,6 +436,7 @@ ifneq ($(REQUIRE_PLATFORM_KEY),)
     endif
 endif
 
+-include $(PLATFORM_PATH)/$(PLATFORM_KEY)/bootloader.mk
 include $(PLATFORM_PATH)/$(PLATFORM_KEY)/platform.mk
 -include $(PLATFORM_PATH)/$(PLATFORM_KEY)/flash.mk
 
@@ -435,6 +445,14 @@ ifneq ($(strip $(PROTOCOL)),)
 else
     include $(TMK_PATH)/protocol/$(PLATFORM_KEY).mk
 endif
+
+# Setup definitions based on the selected MCU
+$(eval $(call add_qmk_prefix_defs,MCU_ORIG,MCU))
+$(eval $(call add_qmk_prefix_defs,MCU_ARCH,MCU_ARCH))
+$(eval $(call add_qmk_prefix_defs,MCU_PORT_NAME,MCU_PORT_NAME))
+$(eval $(call add_qmk_prefix_defs,MCU_FAMILY,MCU_FAMILY))
+$(eval $(call add_qmk_prefix_defs,MCU_SERIES,MCU_SERIES))
+$(eval $(call add_qmk_prefix_defs,BOARD,BOARD))
 
 # TODO: remove this bodge?
 PROJECT_DEFS := $(OPT_DEFS)
@@ -447,7 +465,7 @@ ALL_CONFIGS := $(PROJECT_CONFIG) $(CONFIG_H)
 OUTPUTS := $(KEYMAP_OUTPUT) $(KEYBOARD_OUTPUT)
 $(KEYMAP_OUTPUT)_SRC := $(SRC)
 $(KEYMAP_OUTPUT)_DEFS := $(OPT_DEFS) \
--DQMK_KEYBOARD=\"$(KEYBOARD)\" -DQMK_KEYBOARD_H=\"$(QMK_KEYBOARD_H)\" \
+-DQMK_KEYBOARD=\"$(KEYBOARD)\" -DQMK_KEYBOARD_H=\"$(KEYBOARD_OUTPUT)/src/default_keyboard.h\" \
 -DQMK_KEYMAP=\"$(KEYMAP)\" -DQMK_KEYMAP_H=\"$(KEYMAP).h\" -DQMK_KEYMAP_CONFIG_H=\"$(KEYMAP_PATH)/config.h\"
 $(KEYMAP_OUTPUT)_INC :=  $(VPATH) $(EXTRAINCDIRS)
 $(KEYMAP_OUTPUT)_CONFIG := $(CONFIG_H)
@@ -468,6 +486,19 @@ build: elf cpfirmware
 check-size: build
 check-md5: build
 objs-size: build
+
+ifeq ($(strip $(TOP_SYMBOLS)),yes)
+all: top-symbols
+check-size: top-symbols
+top-symbols: build
+	echo "###########################################"
+	echo "# Highest flash usage:"
+	$(NM) -Crtd --size-sort $(BUILD_DIR)/$(TARGET).elf | grep -i ' [t] ' | head -n10 | sed -e 's#^0000000#       #g' -e 's#^000000#      #g' -e 's#^00000#     #g' -e 's#^0000#    #g' -e 's#^000#   #g' -e 's#^00#  #g' -e 's#^0# #g'
+	echo "###########################################"
+	echo "# Highest RAM usage:"
+	$(NM) -Crtd --size-sort $(BUILD_DIR)/$(TARGET).elf | grep -i ' [dbv] ' | head -n10 | sed -e 's#^0000000#       #g' -e 's#^000000#      #g' -e 's#^00000#     #g' -e 's#^0000#    #g' -e 's#^000#   #g' -e 's#^00#  #g' -e 's#^0# #g'
+	echo "###########################################"
+endif
 
 include $(BUILDDEFS_PATH)/show_options.mk
 include $(BUILDDEFS_PATH)/common_rules.mk

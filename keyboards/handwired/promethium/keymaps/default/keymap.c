@@ -55,7 +55,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include "outputselect.h"
 #include "led.h"
-#define COUNT(x) (sizeof (x) / sizeof (*(x)))
+#define COUNT(x) ARRAY_SIZE((x))
 
 #define KC_WWWB KC_WWW_BACK
 #define KC_WWWF KC_WWW_FORWARD
@@ -529,7 +529,7 @@ void led_reset(void) {
 }
 
 void led_set_default_layer_indicator(void) {
-  uint8_t default_layer = biton32(default_layer_state);
+  uint8_t default_layer = get_highest_layer(default_layer_state);
   if (default_layer == _QWERTY) {
     rgbsps_set(LED_IND_QWERTY, THEME_COLOR_QWERTY);
     rgbsps_set(LED_IND_ALT, COLOR_BLANK);
@@ -553,7 +553,7 @@ void led_set_layer_indicator(void) {
   rgbsps_set(LED_IND_GREEK, COLOR_BLANK);
   rgbsps_set(LED_IND_EMOJI, COLOR_BLANK);
 
-  uint8_t layer = biton32(layer_state);
+  uint8_t layer = get_highest_layer(layer_state);
   if (oldlayer == layer) {
     return;
   }
@@ -606,7 +606,7 @@ void led_set_unicode_input_mode(void) {
     case UC_LNX:
       rgbsps_set(LED_IND_LINUX, THEME_COLOR_LINUX);
       break;
-    case UC_OSX:
+    case UC_MAC:
       rgbsps_set(LED_IND_APPLE, THEME_COLOR_APPLE);
       break;
     case UC_WIN:
@@ -1014,7 +1014,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
   lshift = keyboard_report->mods & MOD_BIT(KC_LSFT);
   rshift = keyboard_report->mods & MOD_BIT(KC_RSFT);
-  layer = biton32(layer_state);
+  layer = get_highest_layer(layer_state);
 
 #ifdef DOUBLESPACE_LAYER_ENABLE
   // double-space: send space immediately if any other key depressed before space is released
@@ -1213,7 +1213,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       return false;
       break;
     case OSX:
-      set_unicode_input_mode(UC_OSX);
+      set_unicode_input_mode(UC_MAC);
 #ifdef RGBSPS_ENABLE
       led_set_unicode_input_mode();
 #endif

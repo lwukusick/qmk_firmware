@@ -19,7 +19,7 @@
 #include "rgb_matrix.h"
 #include "ap2_led.h"
 
-uint8_t led_pos[DRIVER_LED_TOTAL];
+uint8_t led_pos[RGB_MATRIX_LED_COUNT];
 
 void init(void) {
     unsigned int i = 0;
@@ -36,11 +36,11 @@ void init(void) {
 void flush(void) {}
 
 void set_color(int index, uint8_t r, uint8_t g, uint8_t b) {
-    if (r != led_mask[led_pos[index]].p.red   ||
-        g != led_mask[led_pos[index]].p.green ||
-        b != led_mask[led_pos[index]].p.blue)
+    if (r != led_colors[led_pos[index]].p.red   ||
+        g != led_colors[led_pos[index]].p.green ||
+        b != led_colors[led_pos[index]].p.blue)
         {
-            led_mask[led_pos[index]] = (ap2_led_t){
+            led_colors[led_pos[index]] = (ap2_led_t){
                 .p.blue  = b,
                 .p.red   = r,
                 .p.green = g,
@@ -52,7 +52,7 @@ void set_color(int index, uint8_t r, uint8_t g, uint8_t b) {
 }
 
 void set_color_all(uint8_t r, uint8_t g, uint8_t b) {
-    for (int i=0; i<DRIVER_LED_TOTAL; i++)
+    for (int i=0; i<RGB_MATRIX_LED_COUNT; i++)
         set_color(i, r, g, b);
 }
 

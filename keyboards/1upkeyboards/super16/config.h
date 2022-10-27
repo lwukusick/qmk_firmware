@@ -37,7 +37,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     { D1, D0, F4, F5 }
 #define MATRIX_COL_PINS \
     { D4, C6, F6, F7 }
-#define UNUSED_PINS
 
 /* COL2ROW, ROW2COL*/
 #define DIODE_DIRECTION COL2ROW
@@ -54,7 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define RGB_DI_PIN D3
 #ifdef RGB_DI_PIN
 #    define RGBLED_NUM 16  // Add 12 if attaching the RGB LED ring
-#    define DRIVER_LED_TOTAL RGBLED_NUM
+#    define RGB_MATRIX_LED_COUNT RGBLED_NUM
 #    ifdef RGBLIGHT_ENABLE
 #        define RGBLIGHT_HUE_STEP 8
 #        define RGBLIGHT_SAT_STEP 8

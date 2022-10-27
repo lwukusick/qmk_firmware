@@ -23,11 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "../../config.h"
 
-/* Use I2C or Serial, not both */
-
-#define USE_SERIAL
-// #define USE_I2C
-
 /* Select hand configuration */
 
 #define MASTER_LEFT
@@ -41,8 +36,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define RGBLIGHT_ANIMATIONS
 #define RGBLIGHT_EFFECT_SNAKE_LENGTH 1
 #define RGBLIGHT_EFFECT_KNIGHT_LENGTH 1
-
-// Typing Options
-#define QMK_KEYS_PER_SCAN 4
 
 #endif

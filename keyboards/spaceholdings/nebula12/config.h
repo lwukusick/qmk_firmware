@@ -19,18 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "config_common.h"
 
-/* Ensure we jump to bootloader if the RESET keycode was pressed */
+/* Ensure we jump to bootloader if the QK_BOOT keycode was pressed */
 #define EARLY_INIT_PERFORM_BOOTLOADER_JUMP TRUE
 
 /* LSE clock */
 #define STM32_LSECLK 32768
-
-/* USB Device descriptor parameter */
-#define VENDOR_ID       0x8968
-#define PRODUCT_ID      0x5337
-#define DEVICE_VER      0x0001
-#define MANUFACTURER    Yiancar-Designs
-#define PRODUCT         NEBULA12
 
 /* key matrix size */
 #define MATRIX_ROWS 4
@@ -46,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /* Debounce reduces chatter (unintended double-presses) - set 0 if debouncing is not needed */
 #define DEBOUNCE 5
 
-/* Ensure we jump to bootloader if the RESET keycode was pressed */
+/* Ensure we jump to bootloader if the QK_BOOT keycode was pressed */
 #define EARLY_INIT_PERFORM_BOOTLOADER_JUMP TRUE
 
 /* Setting up 400KHz I2C Clock for a 48MHz system clock */
@@ -151,7 +144,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define RGB_BACKLIGHT_COLOR_2 { .h = 127, .s = 255 }
 
 #define DRIVER_COUNT 1
-#define DRIVER_LED_TOTAL 16
+#define RGB_MATRIX_LED_COUNT 16
 
 // These define which keys in the matrix are alphas/mods
 // Used for backlight effects so colors are different for

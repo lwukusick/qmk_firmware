@@ -202,7 +202,7 @@ const rgb_matrix_f rgb_matrix_functions[6][2] = {
 #ifdef ENCODER_ENABLE
 
 static pin_t encoders_pad_a[] = ENCODERS_PAD_A;
-#define NUMBER_OF_ENCODERS (sizeof(encoders_pad_a)/sizeof(pin_t))
+#define NUMBER_OF_ENCODERS ARRAY_SIZE(encoders_pad_a)
 
 const uint16_t PROGMEM encoders[][NUMBER_OF_ENCODERS * 2][2]  = {
     [_QWERTY] = ENCODER_LAYOUT(
@@ -233,7 +233,7 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
   } else
 #endif
   {
-    uint8_t layer = biton32(layer_state);
+    uint8_t layer = get_highest_layer(layer_state);
     uint16_t keycode = pgm_read_word(&encoders[layer][index][clockwise]);
     while (keycode == KC_TRANSPARENT && layer > 0)
     {
@@ -325,7 +325,7 @@ static void render_status(void) {
 
   // Define layers here
   oled_write_P(PSTR("Layer"), false);
-  uint8_t layer = layer_state ? biton(layer_state) : biton32(default_layer_state);
+  uint8_t layer = get_highest_layer(layer_state|default_layer_state);
   switch (layer) {
     case _QWERTY:
       oled_write_P(PSTR("BASE "), false);

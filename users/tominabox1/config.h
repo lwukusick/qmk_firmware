@@ -3,8 +3,6 @@
 // Tapping term settings
 #define TAPPING_TERM_PER_KEY
 #define TAP_HOLD_CAPS_DELAY 350
-#define BOOTMAGIC_KEY_SALT KC_BSPACE
-#define BOOTMAGIC_KEY_EEPROM_CLEAR KC_Q
 
 // OLED settings
 #define OLED_FONT_H "users/tominabox1/doug.c"
@@ -24,7 +22,7 @@
   #ifdef RGB_MATRIX_ENABLE
   #undef RGBLED_NUM
   #define RGBLED_NUM 50
-  #define DRIVER_LED_TOTAL RGBLED_NUM
+  #define RGB_MATRIX_LED_COUNT RGBLED_NUM
   #endif // RGBL_MATRIX_ENABLE
 #endif // KEYBOARD_lazydesigners_dimple
 

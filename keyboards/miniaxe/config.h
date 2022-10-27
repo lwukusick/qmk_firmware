@@ -19,13 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "config_common.h"
 
-/* USB Device descriptor parameter */
-#define VENDOR_ID       0xFEED
-#define PRODUCT_ID      0x3939
-#define DEVICE_VER      0x0001
-#define MANUFACTURER    ENDO Katsuhiro
-#define PRODUCT         MiniAxe
-
 /* key matrix size */
 #define MATRIX_ROWS 8
 #define MATRIX_COLS 5
@@ -49,7 +42,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     { F6, F7, C7, D5, D3 }, \
     { B5, C6, B6, NO_PIN, NO_PIN } \
 }
-#define UNUSED_PINS
 
 /* COL2ROW, ROW2COL*/
 ////#define DIODE_DIRECTION
@@ -62,7 +54,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define RGB_DI_PIN F4
 #ifdef RGB_DI_PIN
 #define RGBLIGHT_ANIMATIONS
-#define RGBLED_NUM 6 
+#define RGBLED_NUM 6
 #define RGBLIGHT_HUE_STEP 8
 #define RGBLIGHT_SAT_STEP 8
 #define RGBLIGHT_VAL_STEP 8
@@ -127,8 +119,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // #define BOOTMAGIC_LITE_ROW 0
 // #define BOOTMAGIC_LITE_COLUMN 0
 
-/* Serial settings */
-#define USE_SERIAL
 /* serial.c configuration for split keyboard */
 #define SOFT_SERIAL_PIN D0
 

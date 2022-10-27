@@ -19,26 +19,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-/* USB Device descriptor parameter */
-#define VENDOR_ID       0x3265
-#define PRODUCT_ID      0x0000
-#define DEVICE_VER      0x0001
-#define MANUFACTURER    Yushakobo
-#define PRODUCT         Helix Beta
-
 #define TAPPING_FORCE_HOLD
 #define TAPPING_TERM 100
 
 #define SPLIT_LAYER_STATE_ENABLE
 #define SPLIT_LED_STATE_ENABLE
 
-/* Use I2C or Serial */
-#define USE_SERIAL
-//#define USE_MATRIX_I2C
-
 /* Soft Serial defines */
 #define SOFT_SERIAL_PIN D2
-#define SERIAL_USE_MULTI_TRANSACTION
 
 /* Select hand configuration */
 #define MASTER_LEFT

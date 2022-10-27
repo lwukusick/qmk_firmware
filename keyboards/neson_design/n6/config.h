@@ -20,19 +20,11 @@
 
 #include "config_common.h"
 
-/* USB Device descriptor parameter */
-#define VENDOR_ID       0x4E65  //'Ne'
-#define PRODUCT_ID      0x4E36  //'N6'
-#define DEVICE_VER      0x0001
-#define MANUFACTURER    Neson Design
-#define PRODUCT         N6 Keyboard
-
 /* key matrix size */
 #define MATRIX_ROWS 5
 #define MATRIX_COLS 15
 #define MATRIX_ROW_PINS { F0, B1, F6, F4, F1}
 #define MATRIX_COL_PINS { F7, B0, E6, C7, C6, B6, B5, B4, D7, D6, D4, D5, B2, D3, D2 }
-#define UNUSED_PINS
 #define DIODE_DIRECTION COL2ROW
 
 /* Debounce reduces chatter (unintended double-presses) - set 0 if debouncing is not needed */
@@ -55,7 +47,7 @@
 #define DRIVER_ADDR_1 0b1110100
 #define DRIVER_ADDR_2 0b1110111
 #define DRIVER_COUNT 2
-#define DRIVER_LED_TOTAL (DRIVER_1_LED_TOTAL+DRIVER_2_LED_TOTAL)
+#define RGB_MATRIX_LED_COUNT (DRIVER_1_LED_TOTAL+DRIVER_2_LED_TOTAL)
 
 #define LED_CAPS_LOCK_PIN   F5
 

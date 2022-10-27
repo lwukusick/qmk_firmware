@@ -18,7 +18,6 @@
 
 #include "config_common.h"
 
-#define USE_SERIAL
 /* serial.c configuration for split keyboard */
 #define SOFT_SERIAL_PIN D0
 
@@ -44,7 +43,6 @@
 */
 #define MATRIX_ROW_PINS { D4, C6, D7, E6, B4 }
 #define MATRIX_COL_PINS { F4, F5, F6, F7, B1 }
-#define UNUSED_PINS
 
 /* COL2ROW, ROW2COL*/
 #define DIODE_DIRECTION COL2ROW

@@ -83,7 +83,7 @@ static const encoder_key PROGMEM encoder_keys[] = {
     {"Play", "", "", KC_MEDIA_PLAY_PAUSE}
 };
 
-#define NUMBER_OF_ENCODER_KEYS sizeof(encoder_keys)/sizeof(encoder_keys[0])
+#define NUMBER_OF_ENCODER_KEYS ARRAY_SIZE(encoder_keys)
 
 static uint8_t selected_encoder_key_id = 0;
 static encoder_key selected_encoder_key;
@@ -160,7 +160,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                 tap_code(KC_VOLD);
             }
         }
-        return true;
+        return false;
     }
 #endif
 
@@ -292,7 +292,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
             oled_write(get_u8_str(get_current_wpm(), ' '), false);
     */
 
-      return true;
+      return false;
     }
 
     void suspend_power_down_user(void) {
