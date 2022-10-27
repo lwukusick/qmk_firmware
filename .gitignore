@@ -64,6 +64,7 @@ CMakeLists.txt
 .vscode/launch.json
 .vscode/tasks.json
 .vscode/temp.sql
+.vs
 tags
 
 # Ignore image/font files
